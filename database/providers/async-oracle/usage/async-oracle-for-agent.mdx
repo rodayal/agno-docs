@@ -1,0 +1,66 @@
+---
+title: Async Oracle for Agent
+sidebarTitle: Agent
+description: Store agent sessions and conversation history using AsyncOracleDb and awaited Agent calls.
+---
+
+Persist an Agent's conversation history with `AsyncOracleDb` and awaited calls.
+
+```python async_oracle_for_agent.py
+import asyncio
+import os
+
+from agno.agent import Agent
+from agno.db.oracle import AsyncOracleDb
+from agno.models.openai import OpenAIResponses
+
+
+async def main():
+    db = AsyncOracleDb(db_url=os.environ["ORACLE_DB_URL"], create_schema=False)
+    try:
+        agent = Agent(
+            model=OpenAIResponses(id=os.environ["OPENAI_MODEL"]),
+            db=db,
+            user_id="alice",
+            session_id="async-oracle-history-example",
+            add_history_to_context=True,
+            num_history_runs=3,
+        )
+        await agent.aprint_response("My project is called Cedar.")
+        await agent.aprint_response("What is my project called?")
+    finally:
+        await db.close()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Reuse the user and session IDs to reload conversation history. Keep construction, requests, and cleanup in one event loop.
+
+## Run the Example
+
+<Steps>
+  <Step title="Install and configure">
+
+    <Snippet file="oracle-model-setup.mdx" />
+
+    Set `ORACLE_DB_URL` to the `oracle+oracledb_async://` URL for your database.
+
+  </Step>
+  <Step title="Run the example">
+
+    ```shell
+    python async_oracle_for_agent.py
+    ```
+
+  </Step>
+</Steps>
+
+## Next Steps
+
+| Task | Guide |
+|------|-------|
+| Compare execution modes | [Async Oracle overview](/database/providers/async-oracle/overview) |
+| Use synchronous storage | [Oracle for Agent](/database/providers/oracle/usage/oracle-for-agent) |
+| Inspect constructor options | [AsyncOracleDb reference](/reference/storage/oracle#asyncoracledb-parameters) |

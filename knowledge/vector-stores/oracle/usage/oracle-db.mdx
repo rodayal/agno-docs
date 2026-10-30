@@ -1,0 +1,95 @@
+---
+title: Insert, Search, and Delete with OracleVector
+sidebarTitle: Insert, Search, and Delete
+description: Upsert owner-scoped documents, filter vector results, and delete a content group in Oracle.
+---
+
+Upsert documents, filter search results, and delete content with `OracleVector`.
+
+```python oracle_vector_db.py
+import os
+from hashlib import sha256
+
+from agno.db.oracle.engine import create_oracle_engine
+from agno.knowledge.document import Document
+from agno.knowledge.embedder.openai import OpenAIEmbedder
+from agno.vectordb.oracle import OracleVector
+
+
+def main():
+    engine = create_oracle_engine(os.environ["ORACLE_DB_URL"])
+    try:
+        vectors = OracleVector(
+            table_name="oracle_vector_example",
+            db_engine=engine,
+            embedder=OpenAIEmbedder(id="text-embedding-3-small", dimensions=1536),
+        )
+        vectors.create()
+        content = "Support requests are reviewed on weekdays from 09:00 to 17:00 UTC."
+        document = Document(
+            id="support-hours",
+            content_id="support-guide",
+            name="Support guide",
+            content=content,
+            meta_data={"topic": "support"},
+        )
+        vectors.upsert(
+            content_hash=sha256(content.encode("utf-8")).hexdigest(),
+            documents=[document],
+            user_id="alice",
+        )
+        results = vectors.search(
+            query="When is support available?",
+            filters={"topic": "support"},
+            user_id="alice",
+        )
+        for result in results:
+            print(result.name, result.content)
+
+        vectors.delete_by_content_id("support-guide", user_id="alice")
+    finally:
+        engine.dispose()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+`content_hash` identifies an ingested content group; `content_id` groups its chunks under an application ID. Repeating the same upsert avoids duplicate rows.
+
+Use the same authenticated user ID for writes, searches, and deletions. The final delete removes Alice's matching content while preserving other users' rows.
+
+## Run the Example
+
+<Steps>
+  <Step title="Install and configure">
+
+    <Snippet file="oracle-setup.mdx" />
+
+    Install the embedding SDK:
+
+    ```shell
+    uv pip install openai
+    ```
+
+    Configure `OPENAI_API_KEY` for embeddings.
+
+  </Step>
+  <Step title="Run the example">
+
+    ```shell
+    python oracle_vector_db.py
+    ```
+
+  </Step>
+</Steps>
+
+Requires Oracle 23ai or later. This example calls the embedding service and uses exact vector search without indexes.
+
+## Next Steps
+
+| Task | Guide |
+|------|-------|
+| Connect knowledge to an Agent | [OracleVector overview](/knowledge/vector-stores/oracle/overview) |
+| Use async ingestion and search | [Async OracleVector usage](/knowledge/vector-stores/oracle/usage/async-oracle-db) |
+| Add keyword relevance | [Oracle hybrid search](/knowledge/vector-stores/oracle/usage/oracle-hybrid-search) |

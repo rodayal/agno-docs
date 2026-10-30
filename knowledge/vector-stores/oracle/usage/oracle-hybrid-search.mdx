@@ -1,0 +1,92 @@
+---
+title: Oracle Hybrid Search
+sidebarTitle: Hybrid Search and Indexes
+description: Combine Oracle vector similarity with Oracle Text relevance and configure IVF or HNSW indexes.
+---
+
+Combine vector similarity and Oracle Text relevance on a populated `OracleVector` table.
+
+```python oracle_hybrid_search.py
+import os
+
+from agno.db.oracle.engine import create_oracle_engine
+from agno.knowledge.embedder.openai import OpenAIEmbedder
+from agno.vectordb.oracle import IVF, OracleVector, SearchType
+
+
+def main():
+    engine = create_oracle_engine(os.environ["ORACLE_DB_URL"])
+    try:
+        vectors = OracleVector(
+            table_name="support_search_vectors",
+            db_engine=engine,
+            embedder=OpenAIEmbedder(id="text-embedding-3-small", dimensions=1536),
+            search_type=SearchType.hybrid,
+            vector_score_weight=0.7,
+            vector_index=IVF(target_accuracy=95),
+        )
+        vectors.optimize()
+        results = vectors.search("support hours", user_id="alice")
+        for result in results:
+            print(result.name, result.content)
+    finally:
+        engine.dispose()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+Use an existing populated `support_search_vectors` table with the same embedding model and dimensions. To populate it with the [upsert example](/knowledge/vector-stores/oracle/usage/oracle-db), use this table name and omit that example's final deletion.
+
+## Run the Example
+
+<Steps>
+  <Step title="Install and configure">
+
+    <Snippet file="oracle-setup.mdx" />
+
+    Install the embedding SDK:
+
+    ```shell
+    uv pip install openai
+    ```
+
+    Configure `OPENAI_API_KEY`. Oracle Text must be installed, and the application user needs index-creation privileges.
+
+  </Step>
+  <Step title="Run the example">
+
+    ```shell
+    python oracle_hybrid_search.py
+    ```
+
+  </Step>
+</Steps>
+
+## Indexes
+
+`optimize()` creates the configured vector index and an Oracle Text CONTEXT index that synchronizes on commit. Ingestion does not create these indexes automatically; keyword and hybrid search require the text index.
+
+| Configuration | Index | Requirement |
+|---------------|-------|-------------|
+| `IVF(target_accuracy=95)` | Neighbor partitions; default index type. | A suitable populated corpus; very small datasets may fail to build. |
+| `HNSW(target_accuracy=95)` | In-memory neighbor graph. | DBA-configured vector memory resources. |
+
+Import `IVF` or `HNSW` from `agno.vectordb.oracle` and pass it as `vector_index`. Check execution plans to confirm whether a query uses the index.
+
+Existing indexes are retained. `optimize(force_recreate=True)` drops and recreates them; schedule this as a maintenance operation.
+
+## Search options
+
+`vector_score_weight=0.7` assigns 70 percent to normalized vector similarity and 30 percent to keyword rank. Use `SearchType.keyword` for keyword-only retrieval. `prefix_match=True` enables prefix matching instead of stemming.
+
+Use the same authenticated user ID for ingestion and retrieval.
+
+## Next Steps
+
+| Task | Guide |
+|------|-------|
+| Review ownership and parameters | [OracleVector overview](/knowledge/vector-stores/oracle/overview) |
+| Run async operations | [Async OracleVector usage](/knowledge/vector-stores/oracle/usage/async-oracle-db) |
+| Persist application sessions | [OracleDb](/database/providers/oracle/overview) |

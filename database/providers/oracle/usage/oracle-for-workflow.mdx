@@ -1,0 +1,76 @@
+---
+title: Oracle for Workflow
+sidebarTitle: Workflow
+description: Persist sequential workflow runs and session state with OracleDb.
+---
+
+Use `OracleDb` to persist Workflow sessions and step results.
+
+```python oracle_for_workflow.py
+import os
+
+from agno.agent import Agent
+from agno.db.oracle import OracleDb
+from agno.models.openai import OpenAIResponses
+from agno.workflow import Workflow
+from agno.workflow.step import Step
+
+
+def main():
+    db = OracleDb(db_url=os.environ["ORACLE_DB_URL"], create_schema=False)
+    try:
+        planner = Agent(
+            name="Planner",
+            model=OpenAIResponses(id=os.environ["OPENAI_MODEL"]),
+            instructions="Create a short implementation plan for the input.",
+        )
+        reviewer = Agent(
+            name="Reviewer",
+            model=OpenAIResponses(id=os.environ["OPENAI_MODEL"]),
+            instructions="Review the plan and list concrete verification steps.",
+        )
+        workflow = Workflow(
+            name="Plan and review",
+            db=db,
+            user_id="alice",
+            session_id="oracle-workflow-example",
+            steps=[
+                Step(name="Plan", agent=planner),
+                Step(name="Review", agent=reviewer),
+            ],
+        )
+        workflow.print_response(input="Build a small customer-support application.")
+    finally:
+        db.close()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+The workflow executes steps in order and stores its session and run output in Oracle.
+
+## Run the Example
+
+<Steps>
+  <Step title="Install and configure">
+
+    <Snippet file="oracle-model-setup.mdx" />
+
+  </Step>
+  <Step title="Run the example">
+
+    ```shell
+    python oracle_for_workflow.py
+    ```
+
+  </Step>
+</Steps>
+
+## Next Steps
+
+| Task | Guide |
+|------|-------|
+| Run the workflow asynchronously | [Async Oracle for Workflow](/database/providers/async-oracle/usage/async-oracle-for-workflow) |
+| Configure schemas and tables | [Oracle overview](/database/providers/oracle/overview) |
+| Inspect constructor options | [OracleDb reference](/reference/storage/oracle) |

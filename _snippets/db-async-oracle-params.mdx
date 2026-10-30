@@ -1,0 +1,27 @@
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `db_url` | `Optional[str]` | `None` | URL using `oracle+oracledb_async://`. Required when `db_engine` is absent. |
+| `db_engine` | `Optional[AsyncEngine]` | `None` | Existing SQLAlchemy async engine using python-oracledb's async driver. A synchronous engine is rejected. |
+| `db_schema` | `Optional[str]` | `None` | Existing Oracle schema/user. `None` uses the connected user's schema. An explicit schema is checked on first table access. |
+| `session_table` | `Optional[str]` | `None` | Override the sessions table name. |
+| `runs_table` | `Optional[str]` | `None` | Override the per-session runs table name. |
+| `memory_table` | `Optional[str]` | `None` | Override the user memories table name. |
+| `metrics_table` | `Optional[str]` | `None` | Override the metrics table name. |
+| `eval_table` | `Optional[str]` | `None` | Override the evaluation runs table name. |
+| `knowledge_table` | `Optional[str]` | `None` | Override the knowledge content metadata table name. |
+| `traces_table` | `Optional[str]` | `None` | Override the traces table name. |
+| `spans_table` | `Optional[str]` | `None` | Override the spans table name. |
+| `versions_table` | `Optional[str]` | `None` | Override the schema versions table name. |
+| `components_table` | `Optional[str]` | `None` | Accepted for base-class compatibility. Component persistence is outside this adapter's supported surface. |
+| `learnings_table` | `Optional[str]` | `None` | Override the learnings table name. |
+| `schedules_table` | `Optional[str]` | `None` | Override the schedules table name. |
+| `schedule_runs_table` | `Optional[str]` | `None` | Override the schedule run history table name. |
+| `job_table` | `Optional[str]` | `None` | Accepted for base-class compatibility. Use synchronous `OracleDb` through the queue's async bridge for durable jobs. |
+| `approvals_table` | `Optional[str]` | `None` | Override the human approvals table name. |
+| `auth_tokens_table` | `Optional[str]` | `None` | Override the external-service OAuth tokens table name. |
+| `service_accounts_table` | `Optional[str]` | `None` | Override the service accounts table name. |
+| `id` | `Optional[str]` | `None` | Database instance ID. When omitted, derived from the connection URL or engine URL and schema. |
+| `create_schema` | `bool` | `True` | Compatibility option. Does not create an Oracle user/schema. Set `False` to suppress the explanatory debug message. |
+| `json_storage` | `Optional[str]` | `None` | `"native"` or `"clob"` for new JSON columns. When omitted, capabilities are detected asynchronously on first table access. |
+
+Table overrides default to `None`, which selects the adapter's standard Agno table names. Component configuration/link tables and MCP OAuth are not supported by the async base class.

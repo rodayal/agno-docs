@@ -403,6 +403,34 @@
                         ]
                       },
                       {
+                        "group": "Oracle Database",
+                        "pages": [
+                          "database/providers/oracle/overview",
+                          {
+                            "group": "Usage",
+                            "pages": [
+                              "database/providers/oracle/usage/oracle-for-agent",
+                              "database/providers/oracle/usage/oracle-for-team",
+                              "database/providers/oracle/usage/oracle-for-workflow"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "group": "Async Oracle Database",
+                        "pages": [
+                          "database/providers/async-oracle/overview",
+                          {
+                            "group": "Usage",
+                            "pages": [
+                              "database/providers/async-oracle/usage/async-oracle-for-agent",
+                              "database/providers/async-oracle/usage/async-oracle-for-team",
+                              "database/providers/async-oracle/usage/async-oracle-for-workflow"
+                            ]
+                          }
+                        ]
+                      },
+                      {
                         "group": "MySQL",
                         "pages": [
                           "database/providers/mysql/overview",
@@ -828,6 +856,20 @@
                               "knowledge/vector-stores/pgvector/usage/pgvector-db",
                               "knowledge/vector-stores/pgvector/usage/async-pgvector-db",
                               "knowledge/vector-stores/pgvector/usage/pgvector-hybrid-search"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "group": "Oracle Vector Search",
+                        "pages": [
+                          "knowledge/vector-stores/oracle/overview",
+                          {
+                            "group": "Usage",
+                            "pages": [
+                              "knowledge/vector-stores/oracle/usage/oracle-db",
+                              "knowledge/vector-stores/oracle/usage/async-oracle-db",
+                              "knowledge/vector-stores/oracle/usage/oracle-hybrid-search"
                             ]
                           }
                         ]
@@ -4047,6 +4089,34 @@
                     ]
                   },
                   {
+                    "group": "Oracle Database",
+                    "pages": [
+                      "database/providers/oracle/overview",
+                      {
+                        "group": "Usage",
+                        "pages": [
+                          "database/providers/oracle/usage/oracle-for-agent",
+                          "database/providers/oracle/usage/oracle-for-team",
+                          "database/providers/oracle/usage/oracle-for-workflow"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Async Oracle Database",
+                    "pages": [
+                      "database/providers/async-oracle/overview",
+                      {
+                        "group": "Usage",
+                        "pages": [
+                          "database/providers/async-oracle/usage/async-oracle-for-agent",
+                          "database/providers/async-oracle/usage/async-oracle-for-team",
+                          "database/providers/async-oracle/usage/async-oracle-for-workflow"
+                        ]
+                      }
+                    ]
+                  },
+                  {
                     "group": "MySQL",
                     "pages": [
                       "database/providers/mysql/overview",
@@ -4285,6 +4355,20 @@
                           "knowledge/vector-stores/pgvector/usage/pgvector-db",
                           "knowledge/vector-stores/pgvector/usage/async-pgvector-db",
                           "knowledge/vector-stores/pgvector/usage/pgvector-hybrid-search"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "group": "Oracle Vector Search",
+                    "pages": [
+                      "knowledge/vector-stores/oracle/overview",
+                      {
+                        "group": "Usage",
+                        "pages": [
+                          "knowledge/vector-stores/oracle/usage/oracle-db",
+                          "knowledge/vector-stores/oracle/usage/async-oracle-db",
+                          "knowledge/vector-stores/oracle/usage/oracle-hybrid-search"
                         ]
                       }
                     ]
@@ -8566,6 +8650,7 @@
                 "group": "Database",
                 "pages": [
                   "reference/storage/postgres",
+                  "reference/storage/oracle",
                   "reference/storage/sqlite",
                   "reference/storage/mongodb",
                   "reference/storage/in_memory",

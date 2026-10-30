@@ -1,0 +1,36 @@
+---
+title: OracleDb
+description: Constructor parameters, bulk methods, and lifecycle for OracleDb and AsyncOracleDb.
+---
+
+`OracleDb` and `AsyncOracleDb` persist Agent, Team, and Workflow sessions, runs, memories, and application state in Oracle Database.
+
+## OracleDb parameters
+
+<Snippet file="db-oracle-params.mdx" />
+
+## AsyncOracleDb parameters
+
+Use `oracle+oracledb_async://` with python-oracledb thin mode and await database operations.
+
+<Snippet file="db-async-oracle-params.mdx" />
+
+## Lifecycle
+
+| Operation | OracleDb | AsyncOracleDb |
+|-----------|----------|---------------|
+| Initialization | Can connect during construction for schema validation and capability detection. | Defers schema validation and capability detection until first table access. |
+| Engine | Synchronous SQLAlchemy engine. | SQLAlchemy `AsyncEngine`. |
+| Cleanup | `db.close()` | `await db.close()` |
+
+Close the database after all operations and shared-engine borrowers finish.
+
+Bulk upserts on `OracleDb` process records individually. With `AsyncOracleDb`, await `upsert_session()` or `upsert_user_memory()` for each record.
+
+<Snippet file="db-new-bulk-methods.mdx" />
+
+## Developer Resources
+
+- [Oracle setup and storage behavior](/database/providers/oracle/overview)
+- [Async Oracle setup and supported features](/database/providers/async-oracle/overview)
+- [Oracle Vector Search](/knowledge/vector-stores/oracle/overview)

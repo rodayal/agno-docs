@@ -1,0 +1,21 @@
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `table_name` | `str` | Required | Name of the vector table. |
+| `schema` | `Optional[str]` | `None` | Existing Oracle schema/user. Uses the connected user's schema, or the borrowed `OracleDb` schema when `db` is supplied. |
+| `name` | `Optional[str]` | `None` | Display name of the vector database. |
+| `description` | `Optional[str]` | `None` | Description of the vector database. |
+| `id` | `Optional[str]` | `None` | Instance ID. Derived from connection identity and table name when omitted. |
+| `db_url` | `Optional[str]` | `None` | Synchronous Oracle URL using `oracle+oracledb://`. |
+| `db_engine` | `Optional[Engine]` | `None` | Existing synchronous SQLAlchemy Oracle engine. |
+| `embedder` | `Optional[Embedder]` | `None` | Embedding provider. Defaults to `OpenAIEmbedder`; `dimensions` must resolve to a value. |
+| `search_type` | `SearchType` | `SearchType.vector` | `vector`, `keyword`, or `hybrid`. Keyword/hybrid require an Oracle Text index. |
+| `vector_index` | `Optional[Union[IVF, HNSW]]` | `None` | Configuration consumed by `optimize()`. When omitted, `optimize()` uses `IVF()`. |
+| `distance` | `Distance` | `Distance.cosine` | Cosine, L2, or maximum inner-product distance. |
+| `prefix_match` | `bool` | `False` | Use prefix matching for keyword/hybrid search instead of the default Oracle Text stemming. |
+| `vector_score_weight` | `float` | `0.5` | Hybrid vector-score weight, between `0` and `1`; keyword rank uses the remaining weight. |
+| `reranker` | `Optional[Reranker]` | `None` | Optional reranker applied to retrieved documents. |
+| `create_schema` | `bool` | `True` | Accepted for interface compatibility; does not create an Oracle user/schema. |
+| `similarity_threshold` | `Optional[float]` | `None` | Minimum normalized similarity score from `0` to `1`. |
+| `db` | `Optional[OracleDb]` | `None` | Keyword-only shortcut borrowing a synchronous `OracleDb` engine. Cannot be combined with `db_url` or `db_engine`. |
+
+Provide `db`, `db_url`, or `db_engine`. `OracleVector` uses a synchronous engine even when called through its async wrappers. It has no `json_storage` constructor parameter and requires a vector-capable server.

@@ -1,0 +1,78 @@
+---
+title: Async Oracle Database
+sidebarTitle: Overview
+description: Persist Agno sessions, runs, memories, and application state with native asynchronous Oracle I/O.
+---
+
+`AsyncOracleDb` stores Agno application state using python-oracledb's native asynchronous thin-mode driver.
+
+```python
+import os
+
+from agno.db.oracle import AsyncOracleDb
+
+db = AsyncOracleDb(
+    db_url=os.environ["ORACLE_DB_URL"],
+    create_schema=False,
+)
+```
+
+Use `oracle+oracledb_async://` and use awaited methods such as `Agent.arun()`, `Team.arun()`, and `Workflow.arun()`. Schema validation and capability detection occur on first table access.
+
+## Setup
+
+<Snippet file="oracle-setup.mdx" />
+
+See the [Oracle storage overview](/database/providers/oracle/overview) for version requirements, JSON storage, schemas, and owner IDs.
+
+## Async requirements
+
+Use thin mode with an `AsyncEngine`; synchronous engines and thick-mode connections are unsupported. Supply your own engine through `db_engine` if needed.
+
+Keep construction, requests, and `await db.close()` in one event loop. Close after pending tasks finish. `OracleVector` uses a separate synchronous engine, including for its [async operations](/knowledge/vector-stores/oracle/usage/async-oracle-db).
+
+## Supported domains
+
+| Domain | AsyncOracleDb |
+|--------|---------------|
+| Sessions, runs, memories, metrics, and evaluations | Supported. |
+| Knowledge content metadata, learnings, traces, and spans | Supported. |
+| Schedules, approvals, auth tokens, and service accounts | Supported. |
+| Components and MCP OAuth | Unsupported by the async base class. |
+| Durable jobs and automatic tool-result offloading | Use synchronous `OracleDb`. |
+| File storage | Use awaited file methods. |
+
+## File storage
+
+`FileSystem(db=db)` selects `AsyncDbFileSystem`:
+
+```python
+from agno.fs import FileSystem
+
+
+async def save_report(db: AsyncOracleDb):
+    files = FileSystem(db=db, namespace="reports", user_scoped=True)
+    alice = files.resolve(user_id="alice")
+    await alice.awrite("daily.txt", "Alice's report")
+    saved = await alice.aread_with_meta("daily.txt")
+    assert saved is not None
+    assert saved.content == "Alice's report"
+    assert saved.metadata.user_id == "alice"
+```
+
+Use awaited file methods; synchronous methods are rejected. File tables use the connected user's schema and the same user partitions as [synchronous file storage](/database/providers/oracle/overview#file-storage-and-user-partitions).
+
+Legacy file tables require the [synchronous schema upgrade](/database/providers/oracle/overview#upgrade-an-existing-file-table) before access.
+
+## Parameters
+
+<Snippet file="db-async-oracle-params.mdx" />
+
+## Next Steps
+
+| Task | Guide |
+|------|-------|
+| Save an async agent's history | [Async Oracle for Agent](/database/providers/async-oracle/usage/async-oracle-for-agent) |
+| Save team sessions | [Async Oracle for Team](/database/providers/async-oracle/usage/async-oracle-for-team) |
+| Save workflow runs | [Async Oracle for Workflow](/database/providers/async-oracle/usage/async-oracle-for-workflow) |
+| Inspect the API | [AsyncOracleDb reference](/reference/storage/oracle#asyncoracledb-parameters) |

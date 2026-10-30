@@ -1,0 +1,77 @@
+---
+title: Async Oracle for Team
+sidebarTitle: Team
+description: Persist team sessions with AsyncOracleDb while awaiting coordinating model calls.
+---
+
+Persist a Team's sessions with `AsyncOracleDb` and awaited calls.
+
+```python async_oracle_for_team.py
+import asyncio
+import os
+
+from agno.agent import Agent
+from agno.db.oracle import AsyncOracleDb
+from agno.models.openai import OpenAIResponses
+from agno.team import Team
+
+
+async def main():
+    db = AsyncOracleDb(db_url=os.environ["ORACLE_DB_URL"], create_schema=False)
+    try:
+        planner = Agent(
+            name="Planner",
+            role="Propose practical implementation steps.",
+            model=OpenAIResponses(id=os.environ["OPENAI_MODEL"]),
+        )
+        reviewer = Agent(
+            name="Reviewer",
+            role="Identify risks and missing verification steps.",
+            model=OpenAIResponses(id=os.environ["OPENAI_MODEL"]),
+        )
+        team = Team(
+            name="Planning team",
+            model=OpenAIResponses(id=os.environ["OPENAI_MODEL"]),
+            members=[planner, reviewer],
+            db=db,
+            user_id="alice",
+            session_id="async-oracle-team-example",
+            add_history_to_context=True,
+        )
+        await team.aprint_response("Plan a small customer-support application.")
+    finally:
+        await db.close()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+The team persists sessions through the async database. Member Agents need their own `db` for standalone persistence.
+
+## Run the Example
+
+<Steps>
+  <Step title="Install and configure">
+
+    <Snippet file="oracle-model-setup.mdx" />
+
+    Set `ORACLE_DB_URL` to use `oracle+oracledb_async://`.
+
+  </Step>
+  <Step title="Run the example">
+
+    ```shell
+    python async_oracle_for_team.py
+    ```
+
+  </Step>
+</Steps>
+
+## Next Steps
+
+| Task | Guide |
+|------|-------|
+| Persist ordered steps | [Async Oracle for Workflow](/database/providers/async-oracle/usage/async-oracle-for-workflow) |
+| Use synchronous team storage | [Oracle for Team](/database/providers/oracle/usage/oracle-for-team) |
+| Inspect constructor options | [AsyncOracleDb reference](/reference/storage/oracle#asyncoracledb-parameters) |

@@ -1,0 +1,34 @@
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `db_url` | `Optional[str]` | `None` | Oracle SQLAlchemy URL. Use `oracle+oracledb://` with python-oracledb. Required when `db_engine` is absent. |
+| `db_engine` | `Optional[Engine]` | `None` | Existing synchronous SQLAlchemy engine. Takes precedence over `db_url`. |
+| `db_schema` | `Optional[str]` | `None` | Existing Oracle schema/user. `None` uses the connected user's schema. An explicit schema is checked during construction. |
+| `session_table` | `Optional[str]` | `None` | Override the sessions table name. |
+| `runs_table` | `Optional[str]` | `None` | Override the per-session runs table name. |
+| `memory_table` | `Optional[str]` | `None` | Override the user memories table name. |
+| `metrics_table` | `Optional[str]` | `None` | Override the metrics table name. |
+| `eval_table` | `Optional[str]` | `None` | Override the evaluation runs table name. |
+| `knowledge_table` | `Optional[str]` | `None` | Override the knowledge content metadata table name. Embeddings belong in a separate `OracleVector` table. |
+| `traces_table` | `Optional[str]` | `None` | Override the traces table name. |
+| `spans_table` | `Optional[str]` | `None` | Override the spans table name. |
+| `versions_table` | `Optional[str]` | `None` | Override the schema versions table name. |
+| `components_table` | `Optional[str]` | `None` | Override the registered components table name. |
+| `component_configs_table` | `Optional[str]` | `None` | Override the component configurations table name. |
+| `component_links_table` | `Optional[str]` | `None` | Override the component links table name. |
+| `learnings_table` | `Optional[str]` | `None` | Override the learnings table name. |
+| `schedules_table` | `Optional[str]` | `None` | Override the schedules table name. |
+| `schedule_runs_table` | `Optional[str]` | `None` | Override the schedule run history table name. |
+| `job_table` | `Optional[str]` | `None` | Override the durable background jobs table name. |
+| `approvals_table` | `Optional[str]` | `None` | Override the human approvals table name. |
+| `auth_tokens_table` | `Optional[str]` | `None` | Override the external-service OAuth tokens table name. |
+| `service_accounts_table` | `Optional[str]` | `None` | Override the service accounts table name. |
+| `mcp_oauth_clients_table` | `Optional[str]` | `None` | Override the MCP OAuth clients table name. |
+| `mcp_oauth_transactions_table` | `Optional[str]` | `None` | Override the MCP OAuth transactions table name. |
+| `mcp_oauth_codes_table` | `Optional[str]` | `None` | Override the MCP OAuth authorization codes table name. |
+| `mcp_oauth_refresh_tokens_table` | `Optional[str]` | `None` | Override the MCP OAuth refresh tokens table name. |
+| `mcp_oauth_keys_table` | `Optional[str]` | `None` | Override the MCP OAuth signing keys table name. |
+| `id` | `Optional[str]` | `None` | Database instance ID. When omitted, derived from the connection URL or engine URL and schema. |
+| `create_schema` | `bool` | `True` | Compatibility option. Does not create an Oracle user/schema. Set `False` to suppress the explanatory debug message. |
+| `json_storage` | `Optional[str]` | `None` | `"native"` or `"clob"` for new JSON columns. Skips capability detection when supplied. Existing tables retain their physical JSON storage type. |
+
+Table overrides default to `None`, which selects the adapter's standard Agno table names. Changing an override selects a different table; it does not rename or migrate an existing table.

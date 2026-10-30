@@ -1,0 +1,18 @@
+```shell
+uv pip install -e "libs/agno[oracle]"
+```
+
+Run this command from the Oracle-enabled Agno source checkout. The extra installs `sqlalchemy>=2.0.41` and `oracledb`; these examples require a checkout containing the Oracle integration.
+
+Set `ORACLE_DB_URL` in your application's environment:
+
+| Adapter | URL format |
+|---------|------------|
+| `OracleDb`, `OracleVector` | `oracle+oracledb://USER:ENCODED_PASSWORD@HOST:1521/?service_name=SERVICE` |
+| `AsyncOracleDb` | `oracle+oracledb_async://USER:ENCODED_PASSWORD@HOST:1521/?service_name=SERVICE` |
+
+Replace the placeholders and URL-encode special characters in the password. `service_name` selects the Oracle service or pluggable database. Supply credentials through deployment configuration or a secret manager and keep them outside source control.
+
+The examples read `ORACLE_DB_URL` explicitly with `os.environ`. Your application must supply it on each startup.
+
+Use an existing Oracle user with connection and table-creation privileges and an appropriate tablespace quota. The adapter creates application tables; account provisioning and cross-schema privileges require DBA configuration.

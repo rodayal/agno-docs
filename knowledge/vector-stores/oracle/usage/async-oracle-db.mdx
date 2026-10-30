@@ -1,0 +1,83 @@
+---
+title: Async OracleVector Usage
+sidebarTitle: Async Usage
+description: Insert knowledge and run an agent asynchronously with OracleVector.
+---
+
+Insert knowledge and run an Agent with `OracleVector` async methods.
+
+```python async_oracle_vector_db.py
+import asyncio
+import os
+
+from agno.agent import Agent
+from agno.db.oracle.engine import create_oracle_engine
+from agno.knowledge.embedder.openai import OpenAIEmbedder
+from agno.knowledge.knowledge import Knowledge
+from agno.models.openai import OpenAIResponses
+from agno.vectordb.oracle import OracleVector
+
+
+async def main():
+    engine = create_oracle_engine(os.environ["ORACLE_DB_URL"])
+    try:
+        vectors = OracleVector(
+            table_name="async_oracle_vector_example",
+            db_engine=engine,
+            embedder=OpenAIEmbedder(id="text-embedding-3-small", dimensions=1536),
+        )
+        knowledge = await asyncio.to_thread(
+            Knowledge,
+            vector_db=vectors,
+            isolate_vector_search=True,
+        )
+        await knowledge.ainsert(
+            name="Support guide",
+            text_content="Support requests are reviewed on weekdays from 09:00 to 17:00 UTC.",
+            user_id="alice",
+        )
+        agent = Agent(
+            model=OpenAIResponses(id=os.environ["OPENAI_MODEL"]),
+            knowledge=knowledge,
+            search_knowledge=True,
+            user_id="alice",
+        )
+        await agent.aprint_response("When are support requests reviewed?")
+    finally:
+        await asyncio.to_thread(engine.dispose)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+`OracleVector` uses a synchronous SQLAlchemy engine. Async ingestion awaits embeddings and offloads writes to a worker; `async_search()` runs synchronous search in a worker. The example also offloads `Knowledge` construction because initialization can access the database.
+
+## Run the Example
+
+<Steps>
+  <Step title="Install and configure">
+
+    <Snippet file="oracle-model-setup.mdx" />
+
+    Use the synchronous `oracle+oracledb://` prefix for `ORACLE_DB_URL`.
+
+  </Step>
+  <Step title="Run the example">
+
+    ```shell
+    python async_oracle_vector_db.py
+    ```
+
+  </Step>
+</Steps>
+
+For native asynchronous session storage, use [AsyncOracleDb](/database/providers/async-oracle/overview) with its async URL.
+
+## Next Steps
+
+| Task | Guide |
+|------|-------|
+| Use direct synchronous vector operations | [OracleVector usage](/knowledge/vector-stores/oracle/usage/oracle-db) |
+| Configure indexes | [Oracle hybrid search](/knowledge/vector-stores/oracle/usage/oracle-hybrid-search) |
+| Inspect constructor options | [OracleVector overview](/knowledge/vector-stores/oracle/overview#parameters) |

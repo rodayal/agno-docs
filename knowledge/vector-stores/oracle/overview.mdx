@@ -1,0 +1,100 @@
+---
+title: Oracle Vector Search
+sidebarTitle: Overview
+description: Store embeddings and retrieve knowledge with Oracle vector, keyword, and hybrid search.
+---
+
+`OracleVector` stores and searches embeddings in Oracle Database 23ai and later. Pair it with `OracleDb` for sessions and knowledge content metadata.
+
+```python oracle_knowledge.py
+import os
+
+from agno.agent import Agent
+from agno.db.oracle import OracleDb
+from agno.knowledge.embedder.openai import OpenAIEmbedder
+from agno.knowledge.knowledge import Knowledge
+from agno.models.openai import OpenAIResponses
+from agno.vectordb.oracle import OracleVector
+
+
+def main():
+    db = OracleDb(db_url=os.environ["ORACLE_DB_URL"], create_schema=False)
+    try:
+        vectors = OracleVector(
+            table_name="support_vectors",
+            db=db,
+            embedder=OpenAIEmbedder(id="text-embedding-3-small", dimensions=1536),
+        )
+        knowledge = Knowledge(
+            content_db=db,
+            vector_db=vectors,
+            isolate_vector_search=True,
+        )
+        knowledge.insert(
+            name="Support guide",
+            text_content="Support requests are reviewed on weekdays from 09:00 to 17:00 UTC.",
+            user_id="alice",
+        )
+        agent = Agent(
+            model=OpenAIResponses(id=os.environ["OPENAI_MODEL"]),
+            db=db,
+            knowledge=knowledge,
+            search_knowledge=True,
+            user_id="alice",
+        )
+        agent.print_response("When are support requests reviewed?")
+    finally:
+        db.close()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+`OracleVector(db=db)` borrows the `OracleDb` connection pool and inherits its schema. Close the pool after both storage and vector operations finish.
+
+## Setup
+
+<Snippet file="oracle-model-setup.mdx" />
+
+Use the synchronous `oracle+oracledb://` URL. Keep the embedding model, dimensions, and distance configuration consistent when reopening a table. Changing the embedding model or dimensions requires re-embedding into a compatible table.
+
+## Search modes
+
+| Mode | Configuration | Prerequisite |
+|------|---------------|--------------|
+| Vector | `SearchType.vector` | Stored embeddings and a query embedder. Exact search needs no ANN index. |
+| Keyword | `SearchType.keyword` | Oracle Text and a CONTEXT index on the content column. |
+| Hybrid | `SearchType.hybrid` | Query embeddings and the Oracle Text index. |
+
+Call `optimize()` on a populated table to create the vector and text indexes. Ingestion does not call it automatically. See [hybrid search and indexes](/knowledge/vector-stores/oracle/usage/oracle-hybrid-search).
+
+## User isolation
+
+Set `Knowledge(isolate_vector_search=True)` and supply the authenticated user ID on ingestion and retrieval.
+
+| User ID | Write behavior | Search behavior |
+|---------|----------------|-----------------|
+| `"alice"` | Stores Alice-owned chunks. | Returns Alice's chunks and shared chunks. |
+| `None` | Stores shared chunks. | Applies no owner filter. |
+
+An empty user ID remains distinct from `None`. The value `__agno_oraclevector_unowned__` is reserved.
+
+Use `delete_by_content_id(content_id, user_id=...)` for owner-scoped deletion. `delete()`, `delete_by_name()`, `delete_by_metadata()`, and `update_metadata()` have no owner filter and require application-level authorization.
+
+<Note>
+When upgrading from an Oracle adapter with the earlier MD5-based row IDs, plan migration or re-ingestion of existing data. The current adapter uses SHA-256-based IDs and does not migrate old IDs automatically.
+</Note>
+
+## Parameters
+
+<Snippet file="vectordb_oracle_params.mdx" />
+
+## Next Steps
+
+| Task | Guide |
+|------|-------|
+| Insert, filter and delete documents | [OracleVector usage](/knowledge/vector-stores/oracle/usage/oracle-db) |
+| Use async operations | [Async OracleVector usage](/knowledge/vector-stores/oracle/usage/async-oracle-db) |
+| Configure Oracle Text and ANN indexes | [Oracle hybrid search](/knowledge/vector-stores/oracle/usage/oracle-hybrid-search) |
+| Persist application state | [OracleDb](/database/providers/oracle/overview) |

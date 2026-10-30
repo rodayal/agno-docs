@@ -1,0 +1,74 @@
+---
+title: Oracle for Team
+sidebarTitle: Team
+description: Persist a coordinating team's sessions and run history with OracleDb.
+---
+
+Use `OracleDb` to persist a Team's sessions and run history.
+
+```python oracle_for_team.py
+import os
+
+from agno.agent import Agent
+from agno.db.oracle import OracleDb
+from agno.models.openai import OpenAIResponses
+from agno.team import Team
+
+
+def main():
+    db = OracleDb(db_url=os.environ["ORACLE_DB_URL"], create_schema=False)
+    try:
+        planner = Agent(
+            name="Planner",
+            role="Propose practical implementation steps.",
+            model=OpenAIResponses(id=os.environ["OPENAI_MODEL"]),
+        )
+        reviewer = Agent(
+            name="Reviewer",
+            role="Identify risks and missing verification steps.",
+            model=OpenAIResponses(id=os.environ["OPENAI_MODEL"]),
+        )
+        team = Team(
+            name="Planning team",
+            model=OpenAIResponses(id=os.environ["OPENAI_MODEL"]),
+            members=[planner, reviewer],
+            db=db,
+            user_id="alice",
+            session_id="oracle-team-example",
+            add_history_to_context=True,
+        )
+        team.print_response("Plan a small customer-support application.")
+    finally:
+        db.close()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+The team stores its sessions and runs in Oracle. Member Agents need their own `db` configuration for standalone persistence.
+
+## Run the Example
+
+<Steps>
+  <Step title="Install and configure">
+
+    <Snippet file="oracle-model-setup.mdx" />
+
+  </Step>
+  <Step title="Run the example">
+
+    ```shell
+    python oracle_for_team.py
+    ```
+
+  </Step>
+</Steps>
+
+## Next Steps
+
+| Task | Guide |
+|------|-------|
+| Use asynchronous team execution | [Async Oracle for Team](/database/providers/async-oracle/usage/async-oracle-for-team) |
+| Persist programmatic steps | [Oracle for Workflow](/database/providers/oracle/usage/oracle-for-workflow) |
+| Inspect constructor options | [OracleDb reference](/reference/storage/oracle) |

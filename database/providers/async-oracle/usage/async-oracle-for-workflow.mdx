@@ -1,0 +1,79 @@
+---
+title: Async Oracle for Workflow
+sidebarTitle: Workflow
+description: Persist workflow sessions and sequential step results with AsyncOracleDb.
+---
+
+Persist Workflow sessions and step results with `AsyncOracleDb`.
+
+```python async_oracle_for_workflow.py
+import asyncio
+import os
+
+from agno.agent import Agent
+from agno.db.oracle import AsyncOracleDb
+from agno.models.openai import OpenAIResponses
+from agno.workflow import Workflow
+from agno.workflow.step import Step
+
+
+async def main():
+    db = AsyncOracleDb(db_url=os.environ["ORACLE_DB_URL"], create_schema=False)
+    try:
+        planner = Agent(
+            name="Planner",
+            model=OpenAIResponses(id=os.environ["OPENAI_MODEL"]),
+            instructions="Create a short implementation plan for the input.",
+        )
+        reviewer = Agent(
+            name="Reviewer",
+            model=OpenAIResponses(id=os.environ["OPENAI_MODEL"]),
+            instructions="Review the plan and list concrete verification steps.",
+        )
+        workflow = Workflow(
+            name="Plan and review",
+            db=db,
+            user_id="alice",
+            session_id="async-oracle-workflow-example",
+            steps=[
+                Step(name="Plan", agent=planner),
+                Step(name="Review", agent=reviewer),
+            ],
+        )
+        await workflow.aprint_response(input="Build a small customer-support application.")
+    finally:
+        await db.close()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+The workflow stores sessions and run results through native async Oracle I/O. Close the database after its tasks finish.
+
+## Run the Example
+
+<Steps>
+  <Step title="Install and configure">
+
+    <Snippet file="oracle-model-setup.mdx" />
+
+    Set `ORACLE_DB_URL` to use `oracle+oracledb_async://`.
+
+  </Step>
+  <Step title="Run the example">
+
+    ```shell
+    python async_oracle_for_workflow.py
+    ```
+
+  </Step>
+</Steps>
+
+## Next Steps
+
+| Task | Guide |
+|------|-------|
+| Check supported domains | [Async Oracle overview](/database/providers/async-oracle/overview) |
+| Use synchronous workflow storage | [Oracle for Workflow](/database/providers/oracle/usage/oracle-for-workflow) |
+| Inspect constructor options | [AsyncOracleDb reference](/reference/storage/oracle#asyncoracledb-parameters) |

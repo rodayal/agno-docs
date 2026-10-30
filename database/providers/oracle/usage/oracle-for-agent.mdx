@@ -1,0 +1,65 @@
+---
+title: Oracle for Agent
+sidebarTitle: Agent
+description: Store agent sessions and reuse conversation history with OracleDb.
+---
+
+Use `OracleDb` to persist an Agent's conversation history.
+
+```python oracle_for_agent.py
+import os
+
+from agno.agent import Agent
+from agno.db.oracle import OracleDb
+from agno.models.openai import OpenAIResponses
+
+
+def main():
+    db = OracleDb(db_url=os.environ["ORACLE_DB_URL"], create_schema=False)
+    try:
+        agent = Agent(
+            model=OpenAIResponses(id=os.environ["OPENAI_MODEL"]),
+            db=db,
+            user_id="alice",
+            session_id="oracle-history-example",
+            add_history_to_context=True,
+            num_history_runs=3,
+        )
+        agent.print_response("My project is called Cedar.")
+        agent.print_response("What is my project called?")
+    finally:
+        db.close()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+Both calls share a user and session. `add_history_to_context=True` includes prior runs in later requests. Reuse the database configuration and IDs to continue after a restart.
+
+## Run the Example
+
+<Steps>
+  <Step title="Install and configure">
+
+    <Snippet file="oracle-model-setup.mdx" />
+
+  </Step>
+  <Step title="Run the example">
+
+    ```shell
+    python oracle_for_agent.py
+    ```
+
+  </Step>
+</Steps>
+
+The literal `alice` value is sample application identity. In a deployed application, derive it from the authenticated user.
+
+## Next Steps
+
+| Task | Guide |
+|------|-------|
+| Configure schemas and JSON | [Oracle overview](/database/providers/oracle/overview) |
+| Use asynchronous execution | [Async Oracle for Agent](/database/providers/async-oracle/usage/async-oracle-for-agent) |
+| Inspect constructor options | [OracleDb reference](/reference/storage/oracle) |

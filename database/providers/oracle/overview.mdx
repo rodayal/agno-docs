@@ -1,0 +1,113 @@
+---
+title: Oracle Database
+sidebarTitle: Overview
+description: Persist Agno sessions, runs, memories, and application state in Oracle Database.
+---
+
+`OracleDb` stores Agent, Team, and Workflow state in Oracle Database through SQLAlchemy.
+
+```python
+import os
+
+from agno.db.oracle import OracleDb
+
+db = OracleDb(
+    db_url=os.environ["ORACLE_DB_URL"],
+    create_schema=False,
+)
+```
+
+Pass `db` to an [Agent](/database/providers/oracle/usage/oracle-for-agent), [Team](/database/providers/oracle/usage/oracle-for-team), or [Workflow](/database/providers/oracle/usage/oracle-for-workflow).
+
+## Setup
+
+<Snippet file="oracle-setup.mdx" />
+
+## Database versions and JSON storage
+
+| Capability | Oracle version |
+|------------|----------------|
+| Application storage with CLOB-backed JSON | 19c and later |
+| Native JSON columns | 21c and later |
+| Native booleans | 23ai and later |
+| [Vector search](/knowledge/vector-stores/oracle/overview) | 23ai and later |
+
+<Note>
+The adapter targets Oracle 19c and later. Live verification on a genuine 19c server remains pending.
+</Note>
+
+Capabilities are detected through `PRODUCT_COMPONENT_VERSION`. If access is restricted, set `json_storage="clob"`, or `json_storage="native"` on a server supporting native JSON. This skips detection and uses conservative capability defaults. Existing tables retain their physical column types.
+
+## Schemas and table names
+
+```python
+db = OracleDb(
+    db_url=os.environ["ORACLE_DB_URL"],
+    session_table="support_sessions",
+    runs_table="support_runs",
+    create_schema=False,
+)
+```
+
+Tables default to the connected user's schema. An explicit `db_schema` must already exist and requires appropriate privileges. `create_schema=True` does not provision an Oracle user.
+
+Reuse the same schema and table names when reopening the application. Table overrides select tables; they do not migrate existing data.
+
+## Owner IDs
+
+Oracle treats empty strings as SQL `NULL`; Agno preserves `""` as a distinct owner using an internal marker. The literal user ID `__agno_unowned__` is reserved. Reads with `user_id=None` depend on the operation, so use authenticated identity when scoping access.
+
+## Share a connection pool
+
+Reuse a database instance or supply an existing synchronous engine through `db_engine`. `OracleVector(db=db)` can borrow the same pool. Call `db.close()` at shutdown after all borrowers finish.
+
+## File storage and user partitions
+
+```python
+from agno.fs import FileSystem
+
+files = FileSystem(db=db, namespace="reports", user_scoped=True)
+alice = files.resolve(user_id="alice")
+bob = files.resolve(user_id="bob")
+
+alice.write("daily.txt", "Alice's report")
+bob.write("daily.txt", "Bob's report")
+assert alice.read("daily.txt") == "Alice's report"
+assert bob.read("daily.txt") == "Bob's report"
+```
+
+Files are keyed by `(namespace, user_id, path)`. `user_scoped=True` requires a user ID during agent calls; use `resolve(user_id=...)` for programmatic access.
+
+The default file table is `agno_fs` in the connected user's schema, even when `db_schema` is set. Supply a `DbFileSystem` backend with `table_name` to select another table.
+
+### Upgrade an existing file table
+
+Legacy tables keyed by `(namespace, path)` raise `SchemaOutdatedError`. Upgrade them with a synchronous backend:
+
+```python
+from agno.fs.db import DbFileSystem
+
+backend = DbFileSystem(db=db, table_name="agno_fs")
+changed = backend.upgrade_schema()
+```
+
+Use your actual file table name. Stop writers and back up the table first. Oracle DDL commits implicitly; run the upgrade through an unbound synchronous backend outside application transactions. Existing files remain in the shared partition. This upgrade also applies to tables used by `AsyncDbFileSystem`.
+
+## Tool-result offloading
+
+Set `offload_tool_results=True` on an Agent or Team using synchronous `OracleDb`. Payloads are stored as files, with references in a tool-results index. The default store uses a shared partition with session-specific namespaces. Session deletion attempts cleanup; custom backends must remain available.
+
+Automatic offloading requires synchronous storage. For explicit async file operations, see [Async Oracle file storage](/database/providers/async-oracle/overview#file-storage).
+
+## Parameters
+
+<Snippet file="db-oracle-params.mdx" />
+
+## Next Steps
+
+| Task | Guide |
+|------|-------|
+| Save an agent's conversation | [Oracle for Agent](/database/providers/oracle/usage/oracle-for-agent) |
+| Use native async storage | [Async Oracle](/database/providers/async-oracle/overview) |
+| Store and search embeddings | [OracleVector](/knowledge/vector-stores/oracle/overview) |
+| Inspect the API | [OracleDb reference](/reference/storage/oracle) |
